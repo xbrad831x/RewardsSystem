@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 import { AppRegistry, StyleSheet, Text, TextInput, View, Button, Alert, TouchableOpacity } from 'react-native';
+import axios from 'axios';
 
 export default class PhoneNumber extends Component {
   constructor(props) {
     super(props);
     this.state = {phonenumber: '',
-                  isDeleting: false,
                   numErr: ''}
   }
 
@@ -16,7 +16,10 @@ export default class PhoneNumber extends Component {
     }
     else
     {
-      this.setState({numErr: ''});
+      this.setState({numErr: ''})
+      axios.post("localhost:5001", {number: text})
+      .then(() => Alert.alert("Success!"))
+      .catch((error) => console.log(error.message));
     }
   }
 

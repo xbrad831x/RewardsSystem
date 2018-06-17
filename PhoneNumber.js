@@ -1,25 +1,45 @@
 import React, { Component } from 'react';
-import { AppRegistry, StyleSheet, Text, TextInput, View, Button, Alert, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, TextInput, View, Alert} from 'react-native';
 import axios from 'axios';
 
 export default class PhoneNumber extends Component {
   constructor(props) {
     super(props);
     this.state = {phonenumber: '',
-                  numErr: ''}
+                  numErr: '',
+                  showNameInput: false,
+                  name: '',
+                  nameerr: ''}
   }
 
   checkNumber(text) {
+    let headers = {
+      'Content-Type': 'application/json'
+    }
+
     if(text.length != 10)
     {
       this.setState({numErr: 'Invalid Phone Number.'})
     }
     else
     {
-      this.setState({numErr: ''})
-      axios.post("localhost:5001", {number: text})
-      .then(() => Alert.alert("Success!"))
-      .catch((error) => console.log(error.message));
+      axios.post("http://192.168.1.110:5001/number", {number: text}, headers)
+      .then((response) => {
+        if(response.data.msg == 'Please enter your name.')
+        {
+          this.setState({showNameInput: true, numErr: ''});
+        }
+        else if(response.data.msg == 'Welcome back! Please show this message to claim your free meal!')
+        {
+          Alert.alert('Congratulations', 'Welcome back! Please show this message to claim your free meal!',
+           [{text: 'Ok', onPress: () => this.props.navigation.replace('Main')}]);
+        }
+        else
+        {
+          this.props.navigation.navigate('Stamps', {name: response.data.name, stamps: response.data.stamps});
+        }
+      })
+      .catch((error) => Alert.alert(error.message));
     }
   }
 
@@ -39,12 +59,38 @@ export default class PhoneNumber extends Component {
     }
   }
 
+  signup() {
+    if(this.state.name.length == 0)
+    {
+      this.setState({nameerr: "Name is blank."})
+    }
+    else
+    {
+      let headers = {
+        'Content-Type': 'application/json'
+      }
+
+      axios.post("http://192.168.1.110:5001/signup", {name: this.state.name, number: this.state.phonenumber}, headers)
+      .then(() => Alert.alert("", "Account Created!", [{text: "Ok", 
+                              onPress: () => this.props.navigation.navigate('Stamps', {name: this.state.name, stamps: 1})}]))
+      .catch((error) => Alert.alert(error.message));
+    }
+  }
+
   render() {
+    const input = <TextInput 
+    style={styles.textinputName}
+    maxLength={20}
+    onChangeText={(name) => this.setState({name})}
+    onSubmitEditing={() => this.signup()}
+    placeholder= "Enter in your name."
+    />; 
+    const placeholder = <Text></Text>;
     return (
       <View style={styles.container}>
         <Text style={styles.textnumber}>{this.formatNumber(this.state.phonenumber)}</Text>
         <TextInput
-        style={styles.textinput}
+        style={styles.textinputPhone}
         keyboardType = 'numeric'
         onKeyPress = {this.onButtonPressed}
         onChangeText={(phonenumber) => this.setState({phonenumber})}
@@ -54,6 +100,11 @@ export default class PhoneNumber extends Component {
         maxLength={10}
       />
       <Text style={styles.texterror}>{this.state.numErr}</Text>
+
+      {this.state.showNameInput ? input : placeholder}
+
+      <Text style={styles.texterror}>{this.state.nameerr}</Text>
+
       </View>
     );
   }
@@ -62,13 +113,22 @@ export default class PhoneNumber extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 100
+    marginTop: 60
   },
 
-  textinput: {
+  textinputPhone: {
     height: 70,
     width: 380,
     fontSize: 35,
+    textAlign: 'center',
+    alignSelf: 'center'
+  },
+
+  textinputName: {
+    height: 70,
+    width: 380,
+    fontSize: 35,
+    marginTop: 60,
     textAlign: 'center',
     alignSelf: 'center'
   },

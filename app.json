@@ -1,4 +1,7 @@
 {
   "name": "RewardsSystem",
-  "displayName": "RewardsSystem"
+  "displayName": "RewardsSystem",
+  "expo": {
+    "sdkVersion": "23.0.0"
+  }
 }
